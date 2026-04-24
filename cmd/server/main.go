@@ -10,6 +10,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/go-chi/chi/v5"
+	chimiddleware "github.com/go-chi/chi/v5/middleware"
+
 	"github.com/alekseikl/additizer-api/internal/auth"
 	"github.com/alekseikl/additizer-api/internal/config"
 	"github.com/alekseikl/additizer-api/internal/database"
@@ -36,15 +39,30 @@ func main() {
 	authHandler := handlers.NewAuthHandler(db, issuer, cfg.BcryptCost)
 	requireAuth := middleware.RequireAuth(issuer)
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /healthz", handlers.Health)
-	mux.HandleFunc("POST /api/v1/auth/register", authHandler.Register)
-	mux.HandleFunc("POST /api/v1/auth/login", authHandler.Login)
-	mux.Handle("GET /api/v1/me", requireAuth(http.HandlerFunc(authHandler.Me)))
+	r := chi.NewRouter()
+	r.Use(chimiddleware.RequestID)
+	r.Use(chimiddleware.RealIP)
+	r.Use(chimiddleware.Logger)
+	r.Use(chimiddleware.Recoverer)
+	r.Use(chimiddleware.Timeout(15 * time.Second))
+
+	r.Get("/healthz", handlers.Health)
+
+	r.Route("/api/v1", func(r chi.Router) {
+		r.Route("/auth", func(r chi.Router) {
+			r.Post("/register", authHandler.Register)
+			r.Post("/login", authHandler.Login)
+		})
+
+		r.Group(func(r chi.Router) {
+			r.Use(requireAuth)
+			r.Get("/me", authHandler.Me)
+		})
+	})
 
 	server := &http.Server{
 		Addr:              cfg.HTTPAddr,
-		Handler:           logRequests(mux),
+		Handler:           r,
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       15 * time.Second,
 		WriteTimeout:      15 * time.Second,
@@ -72,12 +90,4 @@ func main() {
 	if sqlDB, err := db.DB(); err == nil {
 		_ = sqlDB.Close()
 	}
-}
-
-func logRequests(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		next.ServeHTTP(w, r)
-		log.Printf("%s %s %s", r.Method, r.URL.Path, time.Since(start))
-	})
 }

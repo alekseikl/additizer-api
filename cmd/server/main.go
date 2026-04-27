@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	chimiddleware "github.com/go-chi/chi/v5/middleware"
+	chimw "github.com/go-chi/chi/v5/middleware"
 
 	"github.com/alekseikl/additizer-api/internal/auth"
 	"github.com/alekseikl/additizer-api/internal/config"
@@ -40,11 +40,11 @@ func main() {
 	requireAuth := middleware.RequireAuth(issuer)
 
 	r := chi.NewRouter()
-	r.Use(chimiddleware.RequestID)
-	r.Use(chimiddleware.RealIP)
-	r.Use(chimiddleware.Logger)
-	r.Use(chimiddleware.Recoverer)
-	r.Use(chimiddleware.Timeout(15 * time.Second))
+	r.Use(chimw.RequestID)
+	r.Use(chimw.RealIP)
+	r.Use(chimw.Logger)
+	r.Use(chimw.Recoverer)
+	r.Use(chimw.Timeout(30 * time.Second))
 
 	r.Get("/healthz", handlers.Health)
 
@@ -90,4 +90,5 @@ func main() {
 	if sqlDB, err := db.DB(); err == nil {
 		_ = sqlDB.Close()
 	}
+
 }

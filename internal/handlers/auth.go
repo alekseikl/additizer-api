@@ -11,11 +11,14 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/alekseikl/additizer-api/internal/auth"
+	gen "github.com/alekseikl/additizer-api/internal/generated"
 	"github.com/alekseikl/additizer-api/internal/httpx"
 	"github.com/alekseikl/additizer-api/internal/middleware"
 	"github.com/alekseikl/additizer-api/internal/models"
+	"github.com/google/uuid"
 )
 
+// "$(go env GOPATH)/bin/gorm" gen -i ./internal/models -o ./internal/generated
 type AuthHandler struct {
 	db         *gorm.DB
 	issuer     *auth.TokenIssuer
@@ -60,9 +63,11 @@ func toUserResponse(u *models.User) userResponse {
 }
 
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-	var req registerRequest
-	if err := decodeJSON(r, &req); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+	ctx := r.Context()
+
+	req, err := decodeJSON[registerRequest](r)
+	if err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "Bad request")
 		return
 	}
 
@@ -76,22 +81,34 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	hash, err := auth.HashPassword(req.Password, h.bcryptCost)
 	if err != nil {
-		httpx.WriteError(w, http.StatusInternalServerError, "could not hash password")
+		httpx.WriteError(w, http.StatusInternalServerError, "Internal error")
+		return
+	}
+
+	count, err := gorm.G[models.User](h.db).
+		Where(gen.User.Username.Eq(req.Username)).
+		Or(gen.User.Email.Eq(req.Email)).
+		Count(ctx, gen.User.ID.Column().Name)
+
+	if err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "Internal error")
+		return
+	}
+
+	if count > 0 {
+		httpx.WriteError(w, http.StatusConflict, "Email or username already in use")
 		return
 	}
 
 	user := models.User{
+		ID:           uuid.New(),
 		Email:        req.Email,
 		Username:     req.Username,
 		PasswordHash: hash,
 	}
 
-	if err := h.db.WithContext(r.Context()).Create(&user).Error; err != nil {
-		if isUniqueViolation(err) {
-			httpx.WriteError(w, http.StatusConflict, "email or username already in use")
-			return
-		}
-		httpx.WriteError(w, http.StatusInternalServerError, "could not create user")
+	if err := gorm.G[models.User](h.db).Create(ctx, &user); err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "Could not create user")
 		return
 	}
 
@@ -109,27 +126,32 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	var req loginRequest
-	if err := decodeJSON(r, &req); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error())
+	ctx := r.Context()
+
+	req, err := decodeJSON[loginRequest](r)
+	if err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "Bad request")
 		return
 	}
 
 	req.Identifier = strings.TrimSpace(req.Identifier)
+
 	if req.Identifier == "" || req.Password == "" {
 		httpx.WriteError(w, http.StatusBadRequest, "identifier and password are required")
 		return
 	}
 
-	var user models.User
-	query := h.db.WithContext(r.Context())
+	var q gorm.ChainInterface[models.User]
+
 	if _, err := mail.ParseAddress(req.Identifier); err == nil {
-		query = query.Where("email = ?", strings.ToLower(req.Identifier))
+		q = gorm.G[models.User](h.db).Where(gen.User.Email.Eq(req.Identifier))
 	} else {
-		query = query.Where("username = ?", req.Identifier)
+		q = gorm.G[models.User](h.db).Where(gen.User.Username.Eq(req.Identifier))
 	}
 
-	if err := query.First(&user).Error; err != nil {
+	user, err := q.First(ctx)
+
+	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			httpx.WriteError(w, http.StatusUnauthorized, "invalid credentials")
 			return
@@ -157,14 +179,17 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
-	userID, ok := middleware.UserIDFromContext(r.Context())
+	ctx := r.Context()
+
+	userID, ok := middleware.UserIDFromContext(ctx)
 	if !ok {
 		httpx.WriteError(w, http.StatusUnauthorized, "unauthenticated")
 		return
 	}
 
-	var user models.User
-	if err := h.db.WithContext(r.Context()).First(&user, "id = ?", userID).Error; err != nil {
+	user, err := gorm.G[models.User](h.db).Where(gen.User.ID.Eq(userID)).First(ctx)
+
+	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			httpx.WriteError(w, http.StatusNotFound, "user not found")
 			return
@@ -176,13 +201,14 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	httpx.WriteJSON(w, http.StatusOK, toUserResponse(&user))
 }
 
-func decodeJSON(r *http.Request, v any) error {
+func decodeJSON[T any](r *http.Request) (T, error) {
+	var v T
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
-	if err := dec.Decode(v); err != nil {
-		return errors.New("invalid json body")
+	if err := dec.Decode(&v); err != nil {
+		return v, errors.New("invalid json body")
 	}
-	return nil
+	return v, nil
 }
 
 func validateRegister(req registerRequest) error {
@@ -199,14 +225,4 @@ func validateRegister(req registerRequest) error {
 		return errors.New("password must be at least 8 characters")
 	}
 	return nil
-}
-
-func isUniqueViolation(err error) bool {
-	if err == nil {
-		return false
-	}
-	msg := strings.ToLower(err.Error())
-	return strings.Contains(msg, "sqlstate 23505") ||
-		strings.Contains(msg, "duplicate key") ||
-		strings.Contains(msg, "unique constraint")
 }

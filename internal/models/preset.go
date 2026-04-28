@@ -1,9 +1,6 @@
 package models
 
 import (
-	"time"
-
-	"github.com/google/uuid"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
@@ -23,14 +20,11 @@ const (
 )
 
 type Preset struct {
-	ID        uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
-	UserID    uuid.UUID      `gorm:"type:uuid;index;not null" json:"user_id"`
-	User      *User          `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	Type      ModuleType     `gorm:"index;size:255;not null" json:"type"`
-	Name      string         `gorm:"index;size:255;not null" json:"name"`
-	Public    bool           `gorm:"index" json:"public"`
-	Preset    datatypes.JSON `gorm:"type:jsonb" json:"preset"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+	gorm.Model
+	GroupId uint           `gorm:"index;not null"`
+	Group   *PresetGroup   `gorm:"foreignKey:GroupId"`
+	Type    ModuleType     `gorm:"index;size:255;not null" json:"type"`
+	Name    string         `gorm:"index;size:255;not null" json:"name"`
+	Public  bool           `gorm:"index" json:"public"`
+	Preset  datatypes.JSON `gorm:"type:jsonb" json:"preset"`
 }

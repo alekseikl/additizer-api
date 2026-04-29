@@ -13,11 +13,11 @@ import (
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
 
-	"github.com/alekseikl/additizer-api/internal/auth"
 	"github.com/alekseikl/additizer-api/internal/config"
 	"github.com/alekseikl/additizer-api/internal/database"
 	"github.com/alekseikl/additizer-api/internal/handlers"
 	"github.com/alekseikl/additizer-api/internal/middleware"
+	"github.com/alekseikl/additizer-api/internal/users"
 )
 
 func main() {
@@ -35,9 +35,10 @@ func main() {
 		log.Fatalf("migrate database: %v", err)
 	}
 
-	issuer := auth.NewTokenIssuer(cfg.JWTSecret, cfg.JWTExpiration)
-	authHandler := handlers.NewAuthHandler(db, issuer, cfg.BcryptCost)
-	requireAuth := middleware.RequireAuth(issuer)
+	usersService := users.NewService(db, cfg)
+
+	authHandler := handlers.NewAuthHandler(usersService)
+	requireAuth := middleware.RequireAuth(usersService.Issuer())
 
 	r := chi.NewRouter()
 	r.Use(chimw.RequestID)

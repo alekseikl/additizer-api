@@ -10,25 +10,27 @@ import (
 )
 
 var Preset = struct {
-	ID        field.Number[uint]
-	CreatedAt field.Time
-	UpdatedAt field.Time
-	DeletedAt field.Field[gorm.DeletedAt]
-	GroupId   field.Number[uint]
-	Group     field.Struct[models.PresetGroup]
-	Type      field.Struct[models.ModuleType]
-	Name      field.String
-	Public    field.Bool
-	Preset    field.Field[datatypes.JSON]
+	ID         field.Number[uint]
+	CreatedAt  field.Time
+	UpdatedAt  field.Time
+	DeletedAt  field.Field[gorm.DeletedAt]
+	GroupId    field.Number[uint]
+	Group      field.Struct[models.PresetGroup]
+	Type       field.Struct[models.ModuleType]
+	Name       field.String
+	Public     field.Bool
+	AppVersion field.String
+	Preset     field.Field[datatypes.JSON]
 }{
-	ID:        field.Number[uint]{}.WithColumn("id"),
-	CreatedAt: field.Time{}.WithColumn("created_at"),
-	UpdatedAt: field.Time{}.WithColumn("updated_at"),
-	DeletedAt: field.Field[gorm.DeletedAt]{}.WithColumn("deleted_at"),
-	GroupId:   field.Number[uint]{}.WithColumn("group_id"),
-	Group:     field.Struct[models.PresetGroup]{}.WithName("Group"),
-	Type:      field.Struct[models.ModuleType]{}.WithName("Type"),
-	Name:      field.String{}.WithColumn("name"),
-	Public:    field.Bool{}.WithColumn("public"),
-	Preset:    field.Field[datatypes.JSON]{}.WithColumn("preset"),
+	ID:         field.Number[uint]{}.WithColumn("id"),
+	CreatedAt:  field.Time{}.WithColumn("created_at"),
+	UpdatedAt:  field.Time{}.WithColumn("updated_at"),
+	DeletedAt:  field.Field[gorm.DeletedAt]{}.WithColumn("deleted_at"),
+	GroupId:    field.Number[uint]{}.WithColumn("group_id"),
+	Group:      field.Struct[models.PresetGroup]{}.WithName("Group"),
+	Type:       field.Struct[models.ModuleType]{}.WithName("Type"),
+	Name:       field.String{}.WithColumn("name"),
+	Public:     field.Bool{}.WithColumn("public"),
+	AppVersion: field.String{}.WithColumn("app_version"),
+	Preset:     field.Field[datatypes.JSON]{}.WithColumn("preset"),
 }

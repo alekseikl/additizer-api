@@ -21,9 +21,11 @@ func NewAuthHandler(users *users.Service) *AuthHandler {
 }
 
 type registerRequest struct {
-	Email    string `json:"email"`
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Email     string `json:"email"`
+	Username  string `json:"username"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Password  string `json:"password"`
 }
 
 type loginRequest struct {
@@ -32,9 +34,11 @@ type loginRequest struct {
 }
 
 type userResponse struct {
-	ID       string `json:"id"`
-	Email    string `json:"email"`
-	Username string `json:"username"`
+	ID        string `json:"id"`
+	Email     string `json:"email"`
+	Username  string `json:"username"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
 }
 
 type authResponse struct {
@@ -52,7 +56,13 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.users.Register(ctx, users.RegisterInput{Email: req.Email, Username: req.Username, Password: req.Password})
+	result, err := h.users.Register(ctx, users.RegisterInput{
+		Email:     req.Email,
+		Username:  req.Username,
+		FirstName: req.FirstName,
+		LastName:  req.LastName,
+		Password:  req.Password,
+	})
 
 	if err != nil {
 		switch {
@@ -69,9 +79,11 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		Token:     result.Token,
 		ExpiresAt: result.ExpiresAt,
 		User: userResponse{
-			ID:       result.User.ID,
-			Email:    result.User.Email,
-			Username: result.User.Username,
+			ID:        result.User.ID,
+			Email:     result.User.Email,
+			Username:  result.User.Username,
+			FirstName: result.User.FirstName,
+			LastName:  result.User.LastName,
 		},
 	})
 
@@ -103,9 +115,11 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		Token:     result.Token,
 		ExpiresAt: result.ExpiresAt,
 		User: userResponse{
-			ID:       result.User.ID,
-			Email:    result.User.Email,
-			Username: result.User.Username,
+			ID:        result.User.ID,
+			Email:     result.User.Email,
+			Username:  result.User.Username,
+			FirstName: result.User.FirstName,
+			LastName:  result.User.LastName,
 		},
 	})
 }
@@ -127,9 +141,11 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httpx.WriteJSON(w, http.StatusOK, userResponse{
-		ID:       result.ID,
-		Email:    result.Email,
-		Username: result.Username,
+		ID:        result.ID,
+		Email:     result.Email,
+		Username:  result.Username,
+		FirstName: result.FirstName,
+		LastName:  result.LastName,
 	})
 }
 

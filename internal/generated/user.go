@@ -12,6 +12,8 @@ var User = struct {
 	ID           field.Field[uuid.UUID]
 	Email        field.String
 	Username     field.String
+	FirstName    field.String
+	LastName     field.String
 	PasswordHash field.String
 	CreatedAt    field.Time
 	UpdatedAt    field.Time
@@ -20,6 +22,8 @@ var User = struct {
 	ID:           field.Field[uuid.UUID]{}.WithColumn("id"),
 	Email:        field.String{}.WithColumn("email"),
 	Username:     field.String{}.WithColumn("username"),
+	FirstName:    field.String{}.WithColumn("first_name"),
+	LastName:     field.String{}.WithColumn("last_name"),
 	PasswordHash: field.String{}.WithColumn("password_hash"),
 	CreatedAt:    field.Time{}.WithColumn("created_at"),
 	UpdatedAt:    field.Time{}.WithColumn("updated_at"),

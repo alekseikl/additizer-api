@@ -21,10 +21,11 @@ const (
 
 type Preset struct {
 	gorm.Model
-	GroupId uint           `gorm:"index;not null"`
-	Group   *PresetGroup   `gorm:"foreignKey:GroupId"`
-	Type    ModuleType     `gorm:"index;size:255;not null" json:"type"`
-	Name    string         `gorm:"index;size:255;not null" json:"name"`
-	Public  bool           `gorm:"index" json:"public"`
-	Preset  datatypes.JSON `gorm:"type:jsonb" json:"preset"`
+	GroupId    uint           `gorm:"index;not null"`
+	Group      *PresetGroup   `gorm:"foreignKey:GroupId"`
+	Type       ModuleType     `gorm:"index;size:255;not null"`
+	Name       string         `gorm:"index;size:255;not null"`
+	Public     bool           `gorm:"index"`
+	AppVersion string         `gorm:"size:255;not null"`
+	Preset     datatypes.JSON `gorm:"type:jsonb"`
 }

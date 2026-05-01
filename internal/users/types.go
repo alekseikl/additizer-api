@@ -74,20 +74,16 @@ type UpdateUserInput struct {
 
 func (u *UpdateUserInput) normalize() {
 	if u.Email != nil {
-		v := strings.TrimSpace(strings.ToLower(*u.Email))
-		u.Email = &v
+		u.Email = new(strings.TrimSpace(strings.ToLower(*u.Email)))
 	}
 	if u.Username != nil {
-		v := strings.TrimSpace(*u.Username)
-		u.Username = &v
+		u.Username = new(strings.TrimSpace(*u.Username))
 	}
 	if u.FirstName != nil {
-		v := strings.TrimSpace(*u.FirstName)
-		u.FirstName = &v
+		u.FirstName = new(strings.TrimSpace(*u.FirstName))
 	}
 	if u.LastName != nil {
-		v := strings.TrimSpace(*u.LastName)
-		u.LastName = &v
+		u.LastName = new(strings.TrimSpace(*u.LastName))
 	}
 }
 

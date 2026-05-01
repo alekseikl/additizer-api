@@ -36,6 +36,7 @@ func main() {
 	}
 
 	usersService := users.NewService(db, cfg)
+	// presetsService := presets.NewService(db)
 
 	authHandler := handlers.NewAuthHandler(usersService)
 	requireAuth := middleware.RequireAuth(usersService.Issuer())
@@ -76,6 +77,8 @@ func main() {
 			log.Fatalf("server error: %v", err)
 		}
 	}()
+
+	// presetsService.Check(context.Background())
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)

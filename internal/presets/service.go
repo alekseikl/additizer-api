@@ -156,6 +156,51 @@ func (s *Service) CreatePreset(ctx context.Context, userID uuid.UUID, input Crea
 	}, nil
 }
 
+func (s *Service) ListPresets(ctx context.Context, userID uuid.UUID) ([]PresetListItem, error) {
+	if userID == uuid.Nil {
+		return nil, ErrValidation
+	}
+
+	var groupAlias = g.Preset.Group.Name()
+
+	groupUserID := g.PresetGroup.UserID.WithTable(groupAlias)
+	groupName := g.PresetGroup.Name.WithTable(groupAlias)
+
+	presets, err := gorm.G[models.Preset](s.db).
+		Joins(clause.InnerJoin.Association(groupAlias), func(db gorm.JoinBuilder, _ clause.Table, _ clause.Table) error {
+			db.Where(groupUserID.Eq(userID))
+			return nil
+		}).
+		Omit(g.Preset.Preset.Column().Name).
+		Order(groupName.Asc()).
+		Order(g.Preset.Name.Asc()).
+		Find(ctx)
+	if err != nil {
+		return nil, ErrInternal
+	}
+
+	items := make([]PresetListItem, 0, len(presets))
+	for _, preset := range presets {
+		name := ""
+		if preset.Group != nil {
+			name = preset.Group.Name
+		}
+		items = append(items, PresetListItem{
+			ID:         preset.ID,
+			CreatedAt:  preset.CreatedAt,
+			UpdatedAt:  preset.UpdatedAt,
+			GroupID:    preset.GroupId,
+			GroupName:  name,
+			Type:       preset.Type,
+			Name:       preset.Name,
+			Public:     preset.Public,
+			AppVersion: preset.AppVersion,
+		})
+	}
+
+	return items, nil
+}
+
 func (s *Service) UpdatePreset(ctx context.Context, userID uuid.UUID, input UpdatePresetInput) (*PresetResult, error) {
 	input.normalize()
 
@@ -256,3 +301,7 @@ func (s *Service) DeletePreset(ctx context.Context, userID uuid.UUID, presetID u
 
 	return nil
 }
+
+// func (s *Service) Check(ctx context.Context) {
+// 	s.ListPresets(ctx, uuid.MustParse("c5afb29a-c07f-4b43-b673-e1a1b1271819"))
+// }

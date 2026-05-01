@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/alekseikl/additizer-api/internal/models"
@@ -220,6 +221,18 @@ type GroupResult struct {
 type PresetResult struct {
 	ID         uint
 	GroupID    uint
+	Type       models.ModuleType
+	Name       string
+	Public     bool
+	AppVersion string
+}
+
+type PresetListItem struct {
+	ID         uint
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	GroupID    uint
+	GroupName  string
 	Type       models.ModuleType
 	Name       string
 	Public     bool

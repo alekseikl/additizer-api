@@ -212,10 +212,7 @@ func validatePresetName(name string) error {
 }
 
 type GroupResult struct {
-	ID     uint
-	UserID uuid.UUID
-	Name   string
-	Public bool
+	ID uint
 }
 
 type GroupListItem struct {
@@ -228,12 +225,7 @@ type GroupListItem struct {
 }
 
 type PresetResult struct {
-	ID         uint
-	GroupID    uint
-	Type       models.ModuleType
-	Name       string
-	Public     bool
-	AppVersion string
+	ID uint
 }
 
 type PresetListItem struct {
@@ -248,7 +240,7 @@ type PresetListItem struct {
 	AppVersion string
 }
 
-type PresetInGroup struct {
+type PresetItem struct {
 	ID         uint
 	CreatedAt  time.Time
 	UpdatedAt  time.Time

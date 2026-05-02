@@ -37,10 +37,7 @@ func (s *Service) CreateGroup(ctx context.Context, userID uuid.UUID, input Creat
 	}
 
 	return &GroupResult{
-		ID:     group.ID,
-		UserID: group.UserID,
-		Name:   group.Name,
-		Public: group.Public,
+		ID: group.ID,
 	}, nil
 }
 
@@ -73,19 +70,8 @@ func (s *Service) UpdateGroup(ctx context.Context, userID uuid.UUID, groupID uin
 		return nil, ErrInternal
 	}
 
-	group, err := gorm.G[models.PresetGroup](s.db).
-		Where(g.PresetGroup.ID.Eq(groupID)).
-		Where(g.PresetGroup.UserID.Eq(userID)).
-		First(ctx)
-	if err != nil {
-		return nil, ErrInternal
-	}
-
 	return &GroupResult{
-		ID:     group.ID,
-		UserID: group.UserID,
-		Name:   group.Name,
-		Public: group.Public,
+		ID: groupID,
 	}, nil
 }
 
@@ -175,12 +161,7 @@ func (s *Service) CreatePreset(ctx context.Context, userID uuid.UUID, input Crea
 	}
 
 	return &PresetResult{
-		ID:         preset.ID,
-		GroupID:    preset.GroupId,
-		Type:       preset.Type,
-		Name:       preset.Name,
-		Public:     preset.Public,
-		AppVersion: preset.AppVersion,
+		ID: preset.ID,
 	}, nil
 }
 
@@ -229,7 +210,7 @@ func (s *Service) ListPresets(ctx context.Context, userID uuid.UUID) ([]PresetLi
 	return items, nil
 }
 
-func (s *Service) ListPresetsInGroup(ctx context.Context, userID uuid.UUID, groupID uint) ([]PresetInGroup, error) {
+func (s *Service) ListPresetsInGroup(ctx context.Context, userID uuid.UUID, groupID uint) ([]PresetItem, error) {
 	if err := validateGroupIdentity(userID, groupID); err != nil {
 		return nil, err
 	}
@@ -254,9 +235,9 @@ func (s *Service) ListPresetsInGroup(ctx context.Context, userID uuid.UUID, grou
 		return nil, ErrInternal
 	}
 
-	items := make([]PresetInGroup, 0, len(presets))
+	items := make([]PresetItem, 0, len(presets))
 	for _, preset := range presets {
-		items = append(items, PresetInGroup{
+		items = append(items, PresetItem{
 			ID:         preset.ID,
 			CreatedAt:  preset.CreatedAt,
 			UpdatedAt:  preset.UpdatedAt,
@@ -321,20 +302,8 @@ func (s *Service) UpdatePreset(ctx context.Context, userID uuid.UUID, input Upda
 		return nil, ErrInternal
 	}
 
-	preset, err := gorm.G[models.Preset](s.db).
-		Where(g.Preset.ID.Eq(input.PresetID)).
-		First(ctx)
-	if err != nil {
-		return nil, ErrInternal
-	}
-
 	return &PresetResult{
-		ID:         preset.ID,
-		GroupID:    preset.GroupId,
-		Type:       preset.Type,
-		Name:       preset.Name,
-		Public:     preset.Public,
-		AppVersion: preset.AppVersion,
+		ID: input.PresetID,
 	}, nil
 }
 

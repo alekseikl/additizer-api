@@ -50,6 +50,14 @@ type updatePresetRequest struct {
 	Preset     *json.RawMessage  `json:"preset"`
 }
 
+type groupResultResponse struct {
+	ID uint `json:"id"`
+}
+
+type presetResultResponse struct {
+	ID uint `json:"id"`
+}
+
 type groupResponse struct {
 	ID        uint       `json:"id"`
 	CreatedAt *time.Time `json:"created_at,omitempty"`
@@ -96,11 +104,8 @@ func (h *PresetsHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpx.WriteJSON(w, http.StatusCreated, groupResponse{
-		ID:     result.ID,
-		UserID: result.UserID.String(),
-		Name:   result.Name,
-		Public: result.Public,
+	httpx.WriteJSON(w, http.StatusCreated, groupResultResponse{
+		ID: result.ID,
 	})
 }
 
@@ -133,11 +138,8 @@ func (h *PresetsHandler) UpdateGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpx.WriteJSON(w, http.StatusOK, groupResponse{
-		ID:     result.ID,
-		UserID: result.UserID.String(),
-		Name:   result.Name,
-		Public: result.Public,
+	httpx.WriteJSON(w, http.StatusOK, groupResultResponse{
+		ID: result.ID,
 	})
 }
 
@@ -223,13 +225,8 @@ func (h *PresetsHandler) CreatePreset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpx.WriteJSON(w, http.StatusCreated, presetResponse{
-		ID:         result.ID,
-		GroupID:    result.GroupID,
-		Type:       result.Type,
-		Name:       result.Name,
-		Public:     result.Public,
-		AppVersion: result.AppVersion,
+	httpx.WriteJSON(w, http.StatusCreated, presetResultResponse{
+		ID: result.ID,
 	})
 }
 
@@ -348,13 +345,8 @@ func (h *PresetsHandler) UpdatePreset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpx.WriteJSON(w, http.StatusOK, presetResponse{
-		ID:         result.ID,
-		GroupID:    result.GroupID,
-		Type:       result.Type,
-		Name:       result.Name,
-		Public:     result.Public,
-		AppVersion: result.AppVersion,
+	httpx.WriteJSON(w, http.StatusOK, presetResultResponse{
+		ID: result.ID,
 	})
 }
 

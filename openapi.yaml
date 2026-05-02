@@ -1,0 +1,632 @@
+openapi: 3.1.0
+info:
+  title: Additizer API
+  version: 1.0.0
+  description: REST API for Additizer authentication, users, preset groups, and presets.
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+tags:
+  - name: Health
+  - name: Auth
+  - name: Users
+  - name: Preset groups
+  - name: Presets
+paths:
+  /healthz:
+    get:
+      tags:
+        - Health
+      operationId: healthCheck
+      summary: Health check
+      responses:
+        "200":
+          description: Service is healthy.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /api/auth/register:
+    post:
+      tags:
+        - Auth
+      operationId: register
+      summary: Register a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: User registered and authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/auth/login:
+    post:
+      tags:
+        - Auth
+      operationId: login
+      summary: Log in with email or username
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: User authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/me:
+    get:
+      tags:
+        - Users
+      operationId: getCurrentUser
+      summary: Get the authenticated user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Authenticated user.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/groups/:
+    get:
+      tags:
+        - Preset groups
+      operationId: listPresetGroups
+      summary: List preset groups
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Preset groups visible to the authenticated user.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PresetGroup"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags:
+        - Preset groups
+      operationId: createPresetGroup
+      summary: Create a preset group
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGroupRequest"
+      responses:
+        "201":
+          description: Preset group created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresetGroup"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/groups/{groupID}:
+    parameters:
+      - $ref: "#/components/parameters/GroupID"
+    put:
+      tags:
+        - Preset groups
+      operationId: updatePresetGroup
+      summary: Update a preset group
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateGroupRequest"
+      responses:
+        "200":
+          description: Preset group updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresetGroup"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Preset groups
+      operationId: deletePresetGroup
+      summary: Delete a preset group
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Preset group deleted.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/groups/{groupID}/presets:
+    parameters:
+      - $ref: "#/components/parameters/GroupID"
+    get:
+      tags:
+        - Presets
+      operationId: listPresetsInGroup
+      summary: List presets in a group
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Presets in the selected group, including preset JSON data.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PresetWithData"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/presets/:
+    get:
+      tags:
+        - Presets
+      operationId: listPresets
+      summary: List presets
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Presets visible to the authenticated user.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Preset"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags:
+        - Presets
+      operationId: createPreset
+      summary: Create a preset
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePresetRequest"
+      responses:
+        "201":
+          description: Preset created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Preset"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/presets/{presetID}:
+    parameters:
+      - $ref: "#/components/parameters/PresetID"
+    put:
+      tags:
+        - Presets
+      operationId: updatePreset
+      summary: Update a preset
+      description: When either app_version or preset is provided, both must be provided together.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePresetRequest"
+      responses:
+        "200":
+          description: Preset updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Preset"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Presets
+      operationId: deletePreset
+      summary: Delete a preset
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Preset deleted.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    GroupID:
+      name: groupID
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: uint
+        minimum: 1
+      description: Preset group ID.
+    PresetID:
+      name: presetID
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: uint
+        minimum: 1
+      description: Preset ID.
+  responses:
+    BadRequest:
+      description: Invalid JSON, path parameter, or validation failure.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: Missing, invalid, expired, or insufficient authentication.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Requested resource was not found.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Conflict:
+      description: Resource conflicts with an existing record.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    InternalServerError:
+      description: Unexpected server error.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          example: ok
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          example: "validation failed: name is required"
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - username
+        - first_name
+        - last_name
+        - password
+      additionalProperties: false
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          example: jane@example.com
+        username:
+          type: string
+          minLength: 3
+          maxLength: 64
+          example: jane
+        first_name:
+          type: string
+          maxLength: 255
+          example: Jane
+        last_name:
+          type: string
+          maxLength: 255
+          example: Doe
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: supersecret
+    LoginRequest:
+      type: object
+      required:
+        - identifier
+        - password
+      additionalProperties: false
+      properties:
+        identifier:
+          type: string
+          description: Email address or username.
+          example: jane@example.com
+        password:
+          type: string
+          format: password
+          example: supersecret
+    User:
+      type: object
+      required:
+        - id
+        - email
+        - username
+        - first_name
+        - last_name
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+    AuthResponse:
+      type: object
+      required:
+        - token
+        - expires_at
+        - user
+      properties:
+        token:
+          type: string
+          description: JWT bearer token.
+        expires_at:
+          type: string
+          format: date-time
+        user:
+          $ref: "#/components/schemas/User"
+    CreateGroupRequest:
+      type: object
+      required:
+        - name
+        - public
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: Bass presets
+        public:
+          type: boolean
+          example: false
+    UpdateGroupRequest:
+      allOf:
+        - $ref: "#/components/schemas/CreateGroupRequest"
+    PresetGroup:
+      type: object
+      required:
+        - id
+        - user_id
+        - name
+        - public
+      properties:
+        id:
+          type: integer
+          format: uint
+          minimum: 1
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        user_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        public:
+          type: boolean
+    ModuleType:
+      type: string
+      enum:
+        - harmonics-editor
+        - oscillator
+        - spectral-filter
+        - envelope
+        - spectral-mixer
+        - spectral-blend
+        - mixer
+        - amplifier
+        - waveshaper
+    PresetData:
+      description: Arbitrary valid JSON preset payload.
+    CreatePresetRequest:
+      type: object
+      required:
+        - group_id
+        - type
+        - name
+        - public
+        - app_version
+        - preset
+      additionalProperties: false
+      properties:
+        group_id:
+          type: integer
+          format: uint
+          minimum: 1
+        type:
+          $ref: "#/components/schemas/ModuleType"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        public:
+          type: boolean
+        app_version:
+          type: string
+          description: Strict semantic version.
+          maxLength: 255
+          examples:
+            - 1.0.0
+        preset:
+          $ref: "#/components/schemas/PresetData"
+    UpdatePresetRequest:
+      type: object
+      required:
+        - type
+        - name
+        - public
+      additionalProperties: false
+      properties:
+        type:
+          $ref: "#/components/schemas/ModuleType"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        public:
+          type: boolean
+        app_version:
+          type: string
+          description: Strict semantic version. Required when preset is provided.
+          maxLength: 255
+          examples:
+            - 1.0.1
+        preset:
+          allOf:
+            - $ref: "#/components/schemas/PresetData"
+          description: Required when app_version is provided.
+    Preset:
+      type: object
+      required:
+        - id
+        - group_id
+        - type
+        - name
+        - public
+        - app_version
+      properties:
+        id:
+          type: integer
+          format: uint
+          minimum: 1
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        group_id:
+          type: integer
+          format: uint
+          minimum: 1
+        group_name:
+          type: string
+        type:
+          $ref: "#/components/schemas/ModuleType"
+        name:
+          type: string
+        public:
+          type: boolean
+        app_version:
+          type: string
+        preset:
+          $ref: "#/components/schemas/PresetData"
+    PresetWithData:
+      allOf:
+        - $ref: "#/components/schemas/Preset"
+        - type: object
+          required:
+            - preset

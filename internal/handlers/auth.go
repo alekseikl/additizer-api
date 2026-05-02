@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"time"
@@ -50,7 +49,7 @@ type authResponse struct {
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	req, err := decodeJSON[registerRequest](r)
+	req, err := httpx.DecodeJSON[registerRequest](r)
 	if err != nil {
 		httpx.WriteError(w, http.StatusBadRequest, "Bad request")
 		return
@@ -92,7 +91,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	req, err := decodeJSON[loginRequest](r)
+	req, err := httpx.DecodeJSON[loginRequest](r)
 	if err != nil {
 		httpx.WriteError(w, http.StatusBadRequest, "Bad request")
 		return
@@ -147,14 +146,4 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 		FirstName: result.FirstName,
 		LastName:  result.LastName,
 	})
-}
-
-func decodeJSON[T any](r *http.Request) (T, error) {
-	var v T
-	dec := json.NewDecoder(r.Body)
-	dec.DisallowUnknownFields()
-	if err := dec.Decode(&v); err != nil {
-		return v, errors.New("invalid json body")
-	}
-	return v, nil
 }

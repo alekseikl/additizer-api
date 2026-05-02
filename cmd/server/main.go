@@ -17,6 +17,7 @@ import (
 	"github.com/alekseikl/additizer-api/internal/database"
 	"github.com/alekseikl/additizer-api/internal/handlers"
 	"github.com/alekseikl/additizer-api/internal/middleware"
+	"github.com/alekseikl/additizer-api/internal/presets"
 	"github.com/alekseikl/additizer-api/internal/users"
 )
 
@@ -36,9 +37,10 @@ func main() {
 	}
 
 	usersService := users.NewService(db, cfg)
-	// presetsService := presets.NewService(db)
+	presetsService := presets.NewService(db)
 
 	authHandler := handlers.NewAuthHandler(usersService)
+	presetsHandler := handlers.NewPresetsHandler(presetsService)
 	requireAuth := middleware.RequireAuth(usersService.Issuer())
 
 	r := chi.NewRouter()
@@ -59,6 +61,18 @@ func main() {
 		r.Group(func(r chi.Router) {
 			r.Use(requireAuth)
 			r.Get("/me", authHandler.Me)
+			r.Route("/presets", func(r chi.Router) {
+				r.Get("/groups", presetsHandler.ListGroups)
+				r.Post("/groups", presetsHandler.CreateGroup)
+				r.Put("/groups/{groupID}", presetsHandler.UpdateGroup)
+				r.Delete("/groups/{groupID}", presetsHandler.DeleteGroup)
+				r.Get("/groups/{groupID}/presets", presetsHandler.ListPresetsInGroup)
+
+				r.Get("/", presetsHandler.ListPresets)
+				r.Post("/", presetsHandler.CreatePreset)
+				r.Put("/{presetID}", presetsHandler.UpdatePreset)
+				r.Delete("/{presetID}", presetsHandler.DeletePreset)
+			})
 		})
 	})
 

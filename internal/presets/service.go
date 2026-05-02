@@ -115,6 +115,34 @@ func (s *Service) DeleteGroup(ctx context.Context, userID uuid.UUID, groupID uin
 	return nil
 }
 
+func (s *Service) ListGroups(ctx context.Context, userID uuid.UUID) ([]GroupListItem, error) {
+	if userID == uuid.Nil {
+		return nil, ErrValidation
+	}
+
+	groups, err := gorm.G[models.PresetGroup](s.db).
+		Where(g.PresetGroup.UserID.Eq(userID)).
+		Order(g.PresetGroup.Name.Asc()).
+		Find(ctx)
+	if err != nil {
+		return nil, ErrInternal
+	}
+
+	items := make([]GroupListItem, 0, len(groups))
+	for _, group := range groups {
+		items = append(items, GroupListItem{
+			ID:        group.ID,
+			CreatedAt: group.CreatedAt,
+			UpdatedAt: group.UpdatedAt,
+			UserID:    group.UserID,
+			Name:      group.Name,
+			Public:    group.Public,
+		})
+	}
+
+	return items, nil
+}
+
 func (s *Service) CreatePreset(ctx context.Context, userID uuid.UUID, input CreatePresetInput) (*PresetResult, error) {
 	input.normalize()
 
@@ -195,6 +223,50 @@ func (s *Service) ListPresets(ctx context.Context, userID uuid.UUID) ([]PresetLi
 			Name:       preset.Name,
 			Public:     preset.Public,
 			AppVersion: preset.AppVersion,
+		})
+	}
+
+	return items, nil
+}
+
+func (s *Service) ListPresetsInGroup(ctx context.Context, userID uuid.UUID, groupID uint) ([]PresetInGroup, error) {
+	if err := validateGroupIdentity(userID, groupID); err != nil {
+		return nil, err
+	}
+
+	group, err := gorm.G[models.PresetGroup](s.db).
+		Select(g.PresetGroup.ID.Column().Name, g.PresetGroup.Name.Column().Name).
+		Where(g.PresetGroup.ID.Eq(groupID)).
+		Where(g.PresetGroup.UserID.Eq(userID)).
+		First(ctx)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, ErrInternal
+	}
+
+	presets, err := gorm.G[models.Preset](s.db).
+		Where(g.Preset.GroupId.Eq(groupID)).
+		Order(g.Preset.Name.Asc()).
+		Find(ctx)
+	if err != nil {
+		return nil, ErrInternal
+	}
+
+	items := make([]PresetInGroup, 0, len(presets))
+	for _, preset := range presets {
+		items = append(items, PresetInGroup{
+			ID:         preset.ID,
+			CreatedAt:  preset.CreatedAt,
+			UpdatedAt:  preset.UpdatedAt,
+			GroupID:    preset.GroupId,
+			GroupName:  group.Name,
+			Type:       preset.Type,
+			Name:       preset.Name,
+			Public:     preset.Public,
+			AppVersion: preset.AppVersion,
+			Preset:     preset.Preset,
 		})
 	}
 

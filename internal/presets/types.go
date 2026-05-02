@@ -218,6 +218,15 @@ type GroupResult struct {
 	Public bool
 }
 
+type GroupListItem struct {
+	ID        uint
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	UserID    uuid.UUID
+	Name      string
+	Public    bool
+}
+
 type PresetResult struct {
 	ID         uint
 	GroupID    uint
@@ -237,4 +246,17 @@ type PresetListItem struct {
 	Name       string
 	Public     bool
 	AppVersion string
+}
+
+type PresetInGroup struct {
+	ID         uint
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	GroupID    uint
+	GroupName  string
+	Type       models.ModuleType
+	Name       string
+	Public     bool
+	AppVersion string
+	Preset     datatypes.JSON
 }

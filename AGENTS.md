@@ -23,7 +23,7 @@ For each service operation, define dedicated types in the package's `types.go`:
   - `validate()` returns wrapped sentinel errors:
     `fmt.Errorf("%w: human-readable reason", ErrValidation)`.
 - Outputs: `XxxResult` for single-object writes, `XxxListItem` /
-  `XxxItem` for reads. Do not return GORM models from services.
+  `XxxItem` for reads. Do not return GORM models from services. CreatedAt and UpdatedAt should be the last fields in the struct
 
 ### Error handling
 
@@ -76,6 +76,26 @@ regen command (taken from a comment in `internal/handlers/auth.go`) is:
 5. Update `openapi.yaml` with the new path, request/response schemas, and
    error responses.
 6. Run `go vet ./...` and `go test ./...`.
+
+## Behavioral Guidelines
+
+### Think Before Coding
+
+Do not assume or hide confusion. Surface assumptions and tradeoffs before implementing.
+
+- State assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them instead of choosing silently.
+- If something is unclear, stop, name what is confusing, and ask.
+
+### Simplicity First
+
+Write the minimum code that solves the requested problem.
+
+- Do not add features beyond what was asked.
+- Do not add abstractions for single-use code.
+- Do not add flexibility or configurability that was not requested.
+- Do not add error handling for impossible scenarios.
+- If a change is becoming much larger than necessary, simplify before continuing.
 
 ## Things not to do
 

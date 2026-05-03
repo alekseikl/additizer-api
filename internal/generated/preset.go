@@ -4,10 +4,31 @@ package generated
 
 import (
 	"github.com/alekseikl/additizer-api/internal/models"
+	"github.com/google/uuid"
 	"gorm.io/cli/gorm/field"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
+
+var PresetGroup = struct {
+	ID        field.Number[uint]
+	CreatedAt field.Time
+	UpdatedAt field.Time
+	DeletedAt field.Field[gorm.DeletedAt]
+	UserID    field.Field[uuid.UUID]
+	User      field.Struct[models.User]
+	Name      field.String
+	Public    field.Bool
+}{
+	ID:        field.Number[uint]{}.WithColumn("id"),
+	CreatedAt: field.Time{}.WithColumn("created_at"),
+	UpdatedAt: field.Time{}.WithColumn("updated_at"),
+	DeletedAt: field.Field[gorm.DeletedAt]{}.WithColumn("deleted_at"),
+	UserID:    field.Field[uuid.UUID]{}.WithColumn("user_id"),
+	User:      field.Struct[models.User]{}.WithName("User"),
+	Name:      field.String{}.WithColumn("name"),
+	Public:    field.Bool{}.WithColumn("public"),
+}
 
 var Preset = struct {
 	ID         field.Number[uint]
@@ -33,4 +54,44 @@ var Preset = struct {
 	Public:     field.Bool{}.WithColumn("public"),
 	AppVersion: field.String{}.WithColumn("app_version"),
 	Preset:     field.Field[datatypes.JSON]{}.WithColumn("preset"),
+}
+
+var PresetShare = struct {
+	ID        field.Number[uint]
+	CreatedAt field.Time
+	UpdatedAt field.Time
+	DeletedAt field.Field[gorm.DeletedAt]
+	PresetID  field.Number[uint]
+	Preset    field.Struct[models.Preset]
+	UserID    field.Field[uuid.UUID]
+	User      field.Struct[models.User]
+}{
+	ID:        field.Number[uint]{}.WithColumn("id"),
+	CreatedAt: field.Time{}.WithColumn("created_at"),
+	UpdatedAt: field.Time{}.WithColumn("updated_at"),
+	DeletedAt: field.Field[gorm.DeletedAt]{}.WithColumn("deleted_at"),
+	PresetID:  field.Number[uint]{}.WithColumn("preset_id"),
+	Preset:    field.Struct[models.Preset]{}.WithName("Preset"),
+	UserID:    field.Field[uuid.UUID]{}.WithColumn("user_id"),
+	User:      field.Struct[models.User]{}.WithName("User"),
+}
+
+var PresetGroupShare = struct {
+	ID        field.Number[uint]
+	CreatedAt field.Time
+	UpdatedAt field.Time
+	DeletedAt field.Field[gorm.DeletedAt]
+	GroupID   field.Number[uint]
+	Group     field.Struct[models.PresetGroup]
+	UserID    field.Field[uuid.UUID]
+	User      field.Struct[models.User]
+}{
+	ID:        field.Number[uint]{}.WithColumn("id"),
+	CreatedAt: field.Time{}.WithColumn("created_at"),
+	UpdatedAt: field.Time{}.WithColumn("updated_at"),
+	DeletedAt: field.Field[gorm.DeletedAt]{}.WithColumn("deleted_at"),
+	GroupID:   field.Number[uint]{}.WithColumn("group_id"),
+	Group:     field.Struct[models.PresetGroup]{}.WithName("Group"),
+	UserID:    field.Field[uuid.UUID]{}.WithColumn("user_id"),
+	User:      field.Struct[models.User]{}.WithName("User"),
 }

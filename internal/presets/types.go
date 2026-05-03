@@ -224,7 +224,55 @@ type GroupListItem struct {
 	Public    bool
 }
 
+type SharePresetInput struct {
+	PresetID        uint
+	ShareWithUserID uuid.UUID
+}
+
+func (i *SharePresetInput) normalize() {}
+
+func (i *SharePresetInput) validate(ownerUserID uuid.UUID) error {
+	if err := validatePresetIdentity(ownerUserID, i.PresetID); err != nil {
+		return err
+	}
+	if i.ShareWithUserID == uuid.Nil {
+		return fmt.Errorf("%w: share recipient user id is required", ErrValidation)
+	}
+	if i.ShareWithUserID == ownerUserID {
+		return fmt.Errorf("%w: cannot share a preset with yourself", ErrValidation)
+	}
+	return nil
+}
+
 type PresetResult struct {
+	ID uint
+}
+
+type SharePresetResult struct {
+	ID uint
+}
+
+type ShareGroupInput struct {
+	GroupID         uint
+	ShareWithUserID uuid.UUID
+}
+
+func (i *ShareGroupInput) normalize() {}
+
+func (i *ShareGroupInput) validate(ownerUserID uuid.UUID) error {
+	if err := validateGroupIdentity(ownerUserID, i.GroupID); err != nil {
+		return err
+	}
+	if i.ShareWithUserID == uuid.Nil {
+		return fmt.Errorf("%w: share recipient user id is required", ErrValidation)
+	}
+	if i.ShareWithUserID == ownerUserID {
+		return fmt.Errorf("%w: cannot share a preset group with yourself", ErrValidation)
+	}
+	return nil
+}
+
+type ShareGroupResult struct {
 	ID uint
 }
 
@@ -251,4 +299,50 @@ type PresetItem struct {
 	Public     bool
 	AppVersion string
 	Preset     datatypes.JSON
+}
+
+type GroupWithPresetsItem struct {
+	ID        uint
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	UserID    uuid.UUID
+	Name      string
+	Public    bool
+	Presets   []PresetInGroupTreeItem
+}
+
+type PresetInGroupTreeItem struct {
+	ID         uint
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	GroupID    uint
+	Type       models.ModuleType
+	Name       string
+	Public     bool
+	AppVersion string
+	Preset     datatypes.JSON
+}
+
+// SharedPresetsTreeItem is owner user → preset groups → presets shared with the recipient.
+type SharedPresetsTreeItem struct {
+	Owner  SharedPresetOwnerItem
+	Groups []SharedPresetGroupBranchItem
+}
+
+// SharedPresetOwnerItem is the preset owner's public profile (no credentials).
+type SharedPresetOwnerItem struct {
+	ID        uuid.UUID
+	Username  string
+	FirstName string
+	LastName  string
+}
+
+// SharedPresetGroupBranchItem is a preset group belonging to Owner with only presets shared with the recipient.
+type SharedPresetGroupBranchItem struct {
+	ID        uint
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Name      string
+	Public    bool
+	Presets   []PresetInGroupTreeItem
 }

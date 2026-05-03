@@ -37,5 +37,11 @@ func Connect(dsn string) (*gorm.DB, error) {
 }
 
 func Migrate(db *gorm.DB) error {
-	return db.AutoMigrate(&models.User{}, &models.PresetGroup{}, &models.Preset{})
+	return db.AutoMigrate(
+		&models.User{},
+		&models.PresetGroup{},
+		&models.Preset{},
+		&models.PresetShare{},
+		&models.PresetGroupShare{},
+	)
 }

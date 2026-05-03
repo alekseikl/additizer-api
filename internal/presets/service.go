@@ -342,7 +342,3 @@ func (s *Service) DeletePreset(ctx context.Context, userID uuid.UUID, presetID u
 
 	return nil
 }
-
-// func (s *Service) Check(ctx context.Context) {
-// 	s.ListPresets(ctx, uuid.MustParse("c5afb29a-c07f-4b43-b673-e1a1b1271819"))
-// }

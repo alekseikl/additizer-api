@@ -4,14 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/alekseikl/additizer-api/internal/httpx"
 	"github.com/alekseikl/additizer-api/internal/middleware"
 	"github.com/alekseikl/additizer-api/internal/models"
 	"github.com/alekseikl/additizer-api/internal/presets"
-	"github.com/go-chi/chi/v5"
 	"gorm.io/datatypes"
 )
 
@@ -118,7 +116,7 @@ func (h *PresetsHandler) UpdateGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	groupID, ok := uintURLParam(w, r, "groupID")
+	groupID, ok := httpx.UintURLParam(w, r, "groupID")
 	if !ok {
 		return
 	}
@@ -152,7 +150,7 @@ func (h *PresetsHandler) DeleteGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	groupID, ok := uintURLParam(w, r, "groupID")
+	groupID, ok := httpx.UintURLParam(w, r, "groupID")
 	if !ok {
 		return
 	}
@@ -274,7 +272,7 @@ func (h *PresetsHandler) ListPresetsInGroup(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	groupID, ok := uintURLParam(w, r, "groupID")
+	groupID, ok := httpx.UintURLParam(w, r, "groupID")
 	if !ok {
 		return
 	}
@@ -315,7 +313,7 @@ func (h *PresetsHandler) UpdatePreset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	presetID, ok := uintURLParam(w, r, "presetID")
+	presetID, ok := httpx.UintURLParam(w, r, "presetID")
 	if !ok {
 		return
 	}
@@ -359,7 +357,7 @@ func (h *PresetsHandler) DeletePreset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	presetID, ok := uintURLParam(w, r, "presetID")
+	presetID, ok := httpx.UintURLParam(w, r, "presetID")
 	if !ok {
 		return
 	}
@@ -370,15 +368,6 @@ func (h *PresetsHandler) DeletePreset(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httpx.WriteJSON(w, http.StatusNoContent, nil)
-}
-
-func uintURLParam(w http.ResponseWriter, r *http.Request, name string) (uint, bool) {
-	value, err := strconv.ParseUint(chi.URLParam(r, name), 10, 0)
-	if err != nil || value == 0 {
-		httpx.WriteError(w, http.StatusBadRequest, "invalid "+name)
-		return 0, false
-	}
-	return uint(value), true
 }
 
 func writePresetsError(w http.ResponseWriter, err error) {

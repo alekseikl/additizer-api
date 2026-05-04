@@ -22,8 +22,8 @@ func NewAuthHandler(users *users.Service) *AuthHandler {
 type registerRequest struct {
 	Email     string `json:"email"`
 	Username  string `json:"username"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
 	Password  string `json:"password"`
 }
 
@@ -36,13 +36,13 @@ type userResponse struct {
 	ID        string `json:"id"`
 	Email     string `json:"email"`
 	Username  string `json:"username"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
 }
 
 type authResponse struct {
 	Token     string       `json:"token"`
-	ExpiresAt time.Time    `json:"expires_at"`
+	ExpiresAt time.Time    `json:"expiresAt"`
 	User      userResponse `json:"user"`
 }
 

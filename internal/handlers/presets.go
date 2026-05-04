@@ -33,11 +33,11 @@ type updateGroupRequest struct {
 }
 
 type createPresetRequest struct {
-	GroupID    uint              `json:"group_id"`
+	GroupID    uint              `json:"groupId"`
 	Type       models.ModuleType `json:"type"`
 	Name       string            `json:"name"`
 	Public     bool              `json:"public"`
-	AppVersion string            `json:"app_version"`
+	AppVersion string            `json:"appVersion"`
 	Preset     json.RawMessage   `json:"preset"`
 }
 
@@ -45,7 +45,7 @@ type updatePresetRequest struct {
 	Type       models.ModuleType `json:"type"`
 	Name       string            `json:"name"`
 	Public     bool              `json:"public"`
-	AppVersion *string           `json:"app_version"`
+	AppVersion *string           `json:"appVersion"`
 	Preset     *json.RawMessage  `json:"preset"`
 }
 
@@ -58,7 +58,7 @@ type presetResultResponse struct {
 }
 
 type shareWithUserRequest struct {
-	ShareWithUserID uuid.UUID `json:"share_with_user_id"`
+	ShareWithUserID uuid.UUID `json:"shareWithUserId"`
 }
 
 type shareRecordResponse struct {
@@ -67,21 +67,21 @@ type shareRecordResponse struct {
 
 type presetInGroupResponse struct {
 	ID         uint              `json:"id"`
-	CreatedAt  *time.Time        `json:"created_at,omitempty"`
-	UpdatedAt  *time.Time        `json:"updated_at,omitempty"`
-	GroupID    uint              `json:"group_id"`
+	CreatedAt  *time.Time        `json:"createdAt,omitempty"`
+	UpdatedAt  *time.Time        `json:"updatedAt,omitempty"`
+	GroupID    uint              `json:"groupId"`
 	Type       models.ModuleType `json:"type"`
 	Name       string            `json:"name"`
 	Public     bool              `json:"public"`
-	AppVersion string            `json:"app_version"`
+	AppVersion string            `json:"appVersion"`
 	Preset     json.RawMessage   `json:"preset"`
 }
 
 type groupWithPresetsResponse struct {
 	ID        uint                    `json:"id"`
-	CreatedAt *time.Time              `json:"created_at,omitempty"`
-	UpdatedAt *time.Time              `json:"updated_at,omitempty"`
-	UserID    string                  `json:"user_id"`
+	CreatedAt *time.Time              `json:"createdAt,omitempty"`
+	UpdatedAt *time.Time              `json:"updatedAt,omitempty"`
+	UserID    string                  `json:"userId"`
 	Name      string                  `json:"name"`
 	Public    bool                    `json:"public"`
 	Presets   []presetInGroupResponse `json:"presets"`
@@ -90,14 +90,14 @@ type groupWithPresetsResponse struct {
 type sharedPresetOwnerResponse struct {
 	ID        string `json:"id"`
 	Username  string `json:"username"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
 }
 
 type sharedPresetGroupResponse struct {
 	ID        uint                    `json:"id"`
-	CreatedAt *time.Time              `json:"created_at,omitempty"`
-	UpdatedAt *time.Time              `json:"updated_at,omitempty"`
+	CreatedAt *time.Time              `json:"createdAt,omitempty"`
+	UpdatedAt *time.Time              `json:"updatedAt,omitempty"`
 	Name      string                  `json:"name"`
 	Public    bool                    `json:"public"`
 	Presets   []presetInGroupResponse `json:"presets"`
@@ -110,23 +110,23 @@ type sharedPresetsResponse struct {
 
 type groupResponse struct {
 	ID        uint       `json:"id"`
-	CreatedAt *time.Time `json:"created_at,omitempty"`
-	UpdatedAt *time.Time `json:"updated_at,omitempty"`
-	UserID    string     `json:"user_id"`
+	CreatedAt *time.Time `json:"createdAt,omitempty"`
+	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
+	UserID    string     `json:"userId"`
 	Name      string     `json:"name"`
 	Public    bool       `json:"public"`
 }
 
 type presetResponse struct {
 	ID         uint              `json:"id"`
-	CreatedAt  *time.Time        `json:"created_at,omitempty"`
-	UpdatedAt  *time.Time        `json:"updated_at,omitempty"`
-	GroupID    uint              `json:"group_id"`
-	GroupName  string            `json:"group_name,omitempty"`
+	CreatedAt  *time.Time        `json:"createdAt,omitempty"`
+	UpdatedAt  *time.Time        `json:"updatedAt,omitempty"`
+	GroupID    uint              `json:"groupId"`
+	GroupName  string            `json:"groupName,omitempty"`
 	Type       models.ModuleType `json:"type"`
 	Name       string            `json:"name"`
 	Public     bool              `json:"public"`
-	AppVersion string            `json:"app_version"`
+	AppVersion string            `json:"appVersion"`
 	Preset     json.RawMessage   `json:"preset,omitempty"`
 }
 

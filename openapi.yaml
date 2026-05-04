@@ -352,7 +352,7 @@ paths:
         - Presets
       operationId: updatePreset
       summary: Update a preset
-      description: When either app_version or preset is provided, both must be provided together.
+      description: When either appVersion or preset is provided, both must be provided together.
       security:
         - bearerAuth: []
       requestBody:
@@ -503,8 +503,8 @@ components:
       required:
         - email
         - username
-        - first_name
-        - last_name
+        - firstName
+        - lastName
         - password
       additionalProperties: false
       properties:
@@ -518,11 +518,11 @@ components:
           minLength: 3
           maxLength: 64
           example: jane
-        first_name:
+        firstName:
           type: string
           maxLength: 255
           example: Jane
-        last_name:
+        lastName:
           type: string
           maxLength: 255
           example: Doe
@@ -552,8 +552,8 @@ components:
         - id
         - email
         - username
-        - first_name
-        - last_name
+        - firstName
+        - lastName
       properties:
         id:
           type: string
@@ -563,21 +563,21 @@ components:
           format: email
         username:
           type: string
-        first_name:
+        firstName:
           type: string
-        last_name:
+        lastName:
           type: string
     AuthResponse:
       type: object
       required:
         - token
-        - expires_at
+        - expiresAt
         - user
       properties:
         token:
           type: string
           description: JWT bearer token.
-        expires_at:
+        expiresAt:
           type: string
           format: date-time
         user:
@@ -604,7 +604,7 @@ components:
       type: object
       required:
         - id
-        - user_id
+        - userId
         - name
         - public
       properties:
@@ -612,13 +612,13 @@ components:
           type: integer
           format: uint
           minimum: 1
-        created_at:
+        createdAt:
           type: string
           format: date-time
-        updated_at:
+        updatedAt:
           type: string
           format: date-time
-        user_id:
+        userId:
           type: string
           format: uuid
         name:
@@ -642,15 +642,15 @@ components:
     CreatePresetRequest:
       type: object
       required:
-        - group_id
+        - groupId
         - type
         - name
         - public
-        - app_version
+        - appVersion
         - preset
       additionalProperties: false
       properties:
-        group_id:
+        groupId:
           type: integer
           format: uint
           minimum: 1
@@ -662,7 +662,7 @@ components:
           maxLength: 255
         public:
           type: boolean
-        app_version:
+        appVersion:
           type: string
           description: Strict semantic version.
           maxLength: 255
@@ -686,7 +686,7 @@ components:
           maxLength: 255
         public:
           type: boolean
-        app_version:
+        appVersion:
           type: string
           description: Strict semantic version. Required when preset is provided.
           maxLength: 255
@@ -695,32 +695,32 @@ components:
         preset:
           allOf:
             - $ref: "#/components/schemas/PresetData"
-          description: Required when app_version is provided.
+          description: Required when appVersion is provided.
     Preset:
       type: object
       required:
         - id
-        - group_id
+        - groupId
         - type
         - name
         - public
-        - app_version
+        - appVersion
       properties:
         id:
           type: integer
           format: uint
           minimum: 1
-        created_at:
+        createdAt:
           type: string
           format: date-time
-        updated_at:
+        updatedAt:
           type: string
           format: date-time
-        group_id:
+        groupId:
           type: integer
           format: uint
           minimum: 1
-        group_name:
+        groupName:
           type: string
         type:
           $ref: "#/components/schemas/ModuleType"
@@ -728,7 +728,7 @@ components:
           type: string
         public:
           type: boolean
-        app_version:
+        appVersion:
           type: string
         preset:
           $ref: "#/components/schemas/PresetData"
@@ -745,24 +745,24 @@ components:
       type: object
       required:
         - id
-        - group_id
+        - groupId
         - type
         - name
         - public
-        - app_version
+        - appVersion
         - preset
       properties:
         id:
           type: integer
           format: uint
           minimum: 1
-        created_at:
+        createdAt:
           type: string
           format: date-time
-        updated_at:
+        updatedAt:
           type: string
           format: date-time
-        group_id:
+        groupId:
           type: integer
           format: uint
           minimum: 1
@@ -772,7 +772,7 @@ components:
           type: string
         public:
           type: boolean
-        app_version:
+        appVersion:
           type: string
         preset:
           $ref: "#/components/schemas/PresetData"
@@ -792,17 +792,17 @@ components:
       required:
         - id
         - username
-        - first_name
-        - last_name
+        - firstName
+        - lastName
       properties:
         id:
           type: string
           format: uuid
         username:
           type: string
-        first_name:
+        firstName:
           type: string
-        last_name:
+        lastName:
           type: string
     SharedPresetGroup:
       type: object
@@ -816,10 +816,10 @@ components:
           type: integer
           format: uint
           minimum: 1
-        created_at:
+        createdAt:
           type: string
           format: date-time
-        updated_at:
+        updatedAt:
           type: string
           format: date-time
         name:
@@ -845,10 +845,10 @@ components:
     ShareWithUserRequest:
       type: object
       required:
-        - share_with_user_id
+        - shareWithUserId
       additionalProperties: false
       properties:
-        share_with_user_id:
+        shareWithUserId:
           type: string
           format: uuid
     ShareRecord:

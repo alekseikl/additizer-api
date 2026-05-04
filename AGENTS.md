@@ -2,6 +2,10 @@
 
 ## Architectural conventions
 
+### Coding
+
+- Don't use very short abbreviations for varia
+
 ### Layering
 
 - **Handlers** (`internal/handlers`) are thin: decode JSON → call a service →

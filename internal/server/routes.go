@@ -33,10 +33,13 @@ func (s *Server) routes() http.Handler {
 			r.Get("/me", s.auth.Me)
 
 			r.Route("/presets", func(r chi.Router) {
+				r.Get("/my", s.presets.ListGroupsWithPresets)
+				r.Get("/shared", s.presets.ListPresetsSharedWithUser)
 				r.Get("/", s.presets.ListPresets)
 				r.Post("/", s.presets.CreatePreset)
 				r.Put("/{presetID}", s.presets.UpdatePreset)
 				r.Delete("/{presetID}", s.presets.DeletePreset)
+				r.Post("/{presetID}/share", s.presets.SharePreset)
 			})
 
 			r.Route("/groups", func(r chi.Router) {
@@ -45,6 +48,7 @@ func (s *Server) routes() http.Handler {
 				r.Put("/{groupID}", s.presets.UpdateGroup)
 				r.Delete("/{groupID}", s.presets.DeleteGroup)
 				r.Get("/{groupID}/presets", s.presets.ListPresetsInGroup)
+				r.Post("/{groupID}/share", s.presets.ShareGroup)
 			})
 		})
 	})

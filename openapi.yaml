@@ -191,6 +191,37 @@ paths:
           $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /api/groups/{groupID}/share:
+    parameters:
+      - $ref: "#/components/parameters/GroupID"
+    post:
+      tags:
+        - Preset groups
+      operationId: sharePresetGroup
+      summary: Share a preset group with another user
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShareWithUserRequest"
+      responses:
+        "201":
+          description: Share record created or restored.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShareRecord"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /api/groups/{groupID}/presets:
     parameters:
       - $ref: "#/components/parameters/GroupID"
@@ -216,6 +247,28 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/presets/my:
+    get:
+      tags:
+        - Presets
+      operationId: listMyPresetGroupsWithPresets
+      summary: List my preset groups with nested presets
+      description: Returns all of the caller's preset groups, each with its presets (including preset JSON).
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Preset groups with nested presets.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PresetGroupWithPresets"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "500":
           $ref: "#/components/responses/InternalServerError"
   /api/presets/:
@@ -267,6 +320,30 @@ paths:
           $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /api/presets/shared:
+    get:
+      tags:
+        - Presets
+      operationId: listPresetsSharedWithMe
+      summary: List presets shared with the current user
+      description: >-
+        Presets shared via per-preset or whole-group shares, grouped by owner
+        user and preset group.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Shared presets nested by owner and group.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SharedPresetsBlock"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /api/presets/{presetID}:
     parameters:
       - $ref: "#/components/parameters/PresetID"
@@ -309,6 +386,37 @@ paths:
       responses:
         "204":
           description: Preset deleted.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/presets/{presetID}/share:
+    parameters:
+      - $ref: "#/components/parameters/PresetID"
+    post:
+      tags:
+        - Presets
+      operationId: sharePreset
+      summary: Share a preset with another user
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShareWithUserRequest"
+      responses:
+        "201":
+          description: Share record created or restored.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShareRecord"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -630,3 +738,126 @@ components:
         - type: object
           required:
             - preset
+          properties:
+            preset:
+              $ref: "#/components/schemas/PresetData"
+    PresetInGroup:
+      type: object
+      required:
+        - id
+        - group_id
+        - type
+        - name
+        - public
+        - app_version
+        - preset
+      properties:
+        id:
+          type: integer
+          format: uint
+          minimum: 1
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        group_id:
+          type: integer
+          format: uint
+          minimum: 1
+        type:
+          $ref: "#/components/schemas/ModuleType"
+        name:
+          type: string
+        public:
+          type: boolean
+        app_version:
+          type: string
+        preset:
+          $ref: "#/components/schemas/PresetData"
+    PresetGroupWithPresets:
+      allOf:
+        - $ref: "#/components/schemas/PresetGroup"
+        - type: object
+          required:
+            - presets
+          properties:
+            presets:
+              type: array
+              items:
+                $ref: "#/components/schemas/PresetInGroup"
+    SharedPresetOwner:
+      type: object
+      required:
+        - id
+        - username
+        - first_name
+        - last_name
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+    SharedPresetGroup:
+      type: object
+      required:
+        - id
+        - name
+        - public
+        - presets
+      properties:
+        id:
+          type: integer
+          format: uint
+          minimum: 1
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        name:
+          type: string
+        public:
+          type: boolean
+        presets:
+          type: array
+          items:
+            $ref: "#/components/schemas/PresetInGroup"
+    SharedPresetsBlock:
+      type: object
+      required:
+        - owner
+        - groups
+      properties:
+        owner:
+          $ref: "#/components/schemas/SharedPresetOwner"
+        groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/SharedPresetGroup"
+    ShareWithUserRequest:
+      type: object
+      required:
+        - share_with_user_id
+      additionalProperties: false
+      properties:
+        share_with_user_id:
+          type: string
+          format: uuid
+    ShareRecord:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+          format: uint
+          minimum: 1
+          description: Preset share or preset group share row id.

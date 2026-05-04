@@ -3,6 +3,8 @@ package presets
 import (
 	"context"
 	"errors"
+	"maps"
+	"slices"
 	"sort"
 	"strings"
 
@@ -242,9 +244,9 @@ func (s *Service) ListGroupsWithPresets(ctx context.Context, userID uuid.UUID) (
 		return nil, ErrInternal
 	}
 
-	byGroup := make(map[uint][]PresetInGroupTreeItem, len(presets))
+	byGroup := make(map[uint][]PresetInGroupItem, len(presets))
 	for _, preset := range presets {
-		byGroup[preset.GroupId] = append(byGroup[preset.GroupId], PresetInGroupTreeItem{
+		byGroup[preset.GroupId] = append(byGroup[preset.GroupId], PresetInGroupItem{
 			ID:         preset.ID,
 			CreatedAt:  preset.CreatedAt,
 			UpdatedAt:  preset.UpdatedAt,
@@ -261,7 +263,7 @@ func (s *Service) ListGroupsWithPresets(ctx context.Context, userID uuid.UUID) (
 	for _, grp := range groups {
 		ps := byGroup[grp.ID]
 		if ps == nil {
-			ps = []PresetInGroupTreeItem{}
+			ps = []PresetInGroupItem{}
 		}
 		out = append(out, GroupWithPresetsItem{
 			ID:        grp.ID,
@@ -280,81 +282,93 @@ func (s *Service) ListGroupsWithPresets(ctx context.Context, userID uuid.UUID) (
 // ListPresetsSharedWithUser returns presets shared with the user via PresetShare and PresetGroupShare,
 // nested as owning user → preset group → preset. Owners and groups are ordered by name; presets by name
 // within each group. Overlaps between per-preset shares and whole-group shares are deduplicated by preset id.
-func (s *Service) ListPresetsSharedWithUser(ctx context.Context, recipientUserID uuid.UUID) ([]SharedPresetsTreeItem, error) {
+func (s *Service) ListPresetsSharedWithUser(ctx context.Context, recipientUserID uuid.UUID) ([]SharedPresetsItem, error) {
 	if recipientUserID == uuid.Nil {
 		return nil, ErrValidation
 	}
 
 	presetSharePresetGroupUser := g.PresetShare.Preset.Name() + "." + g.Preset.Group.Name() + "." + g.PresetGroup.User.Name()
-	groupShareGroupUser := g.PresetGroupShare.Group.Name() + "." + g.PresetGroup.User.Name()
-	omitPassword := func(pb gorm.PreloadBuilder) error {
-		pb.Omit(g.User.PasswordHash.Column().Name)
+	groupShareRoot := g.PresetGroupShare.Group.Name()
+	userPreload := func(pb gorm.PreloadBuilder) error {
+		pb.
+			Select(g.User.ID.Column().Name).
+			Select(g.User.Username.Column().Name).
+			Select(g.User.FirstName.Column().Name).
+			Select(g.User.LastName.Column().Name)
 		return nil
 	}
 
 	shares, err := gorm.G[models.PresetShare](s.db).
 		Where(g.PresetShare.UserID.Eq(recipientUserID)).
-		Preload(presetSharePresetGroupUser, omitPassword).
+		Preload(presetSharePresetGroupUser, userPreload).
 		Find(ctx)
 	if err != nil {
 		return nil, ErrInternal
 	}
+
+	groupShareGroupUser := groupShareRoot + "." + g.PresetGroup.User.Name()
+	groupShareGroupPresets := groupShareRoot + "." + g.PresetGroup.Presets.Name()
 
 	groupShares, err := gorm.G[models.PresetGroupShare](s.db).
 		Where(g.PresetGroupShare.UserID.Eq(recipientUserID)).
-		Preload(groupShareGroupUser, omitPassword).
+		Preload(groupShareGroupUser, userPreload).
+		Preload(groupShareGroupPresets, func(_ gorm.PreloadBuilder) error {
+			return nil
+		}).
 		Find(ctx)
 	if err != nil {
 		return nil, ErrInternal
 	}
 
-	type groupBranch struct {
+	type userGroup struct {
 		group      models.PresetGroup
-		presets    []PresetInGroupTreeItem
+		presets    []PresetInGroupItem
 		seenPreset map[uint]struct{}
 	}
+
 	type ownerAcc struct {
 		owner  SharedPresetOwnerItem
-		groups map[uint]*groupBranch
+		groups map[uint]*userGroup
 	}
 
 	byOwner := make(map[uuid.UUID]*ownerAcc)
 
-	addPresetDedup := func(gb *groupBranch, item PresetInGroupTreeItem) {
-		if gb.seenPreset == nil {
-			gb.seenPreset = make(map[uint]struct{})
+	addPreset := func(group *userGroup, preset PresetInGroupItem) {
+		if group.seenPreset == nil {
+			group.seenPreset = make(map[uint]struct{})
 		}
-		if _, dup := gb.seenPreset[item.ID]; dup {
+		if _, dup := group.seenPreset[preset.ID]; dup {
 			return
 		}
-		gb.seenPreset[item.ID] = struct{}{}
-		gb.presets = append(gb.presets, item)
+		group.seenPreset[preset.ID] = struct{}{}
+		group.presets = append(group.presets, preset)
 	}
 
-	ensureBranch := func(u *models.User, pg *models.PresetGroup) *groupBranch {
-		oa, ok := byOwner[u.ID]
+	ensureGroup := func(user *models.User, presetGroup *models.PresetGroup) *userGroup {
+		owner, ok := byOwner[user.ID]
 		if !ok {
-			oa = &ownerAcc{
+			owner = &ownerAcc{
 				owner: SharedPresetOwnerItem{
-					ID:        u.ID,
-					Username:  u.Username,
-					FirstName: u.FirstName,
-					LastName:  u.LastName,
+					ID:        user.ID,
+					Username:  user.Username,
+					FirstName: user.FirstName,
+					LastName:  user.LastName,
 				},
-				groups: make(map[uint]*groupBranch),
+				groups: make(map[uint]*userGroup),
 			}
-			byOwner[u.ID] = oa
+			byOwner[user.ID] = owner
 		}
-		gb, ok := oa.groups[pg.ID]
+
+		group, ok := owner.groups[presetGroup.ID]
 		if !ok {
-			gb = &groupBranch{group: *pg}
-			oa.groups[pg.ID] = gb
+			group = &userGroup{group: *presetGroup}
+			owner.groups[presetGroup.ID] = group
 		}
-		return gb
+		return group
 	}
 
-	presetToItem := func(p *models.Preset) PresetInGroupTreeItem {
-		return PresetInGroupTreeItem{
+	presetToItem := func(p *models.Preset) PresetInGroupItem {
+		return PresetInGroupItem{
 			ID:         p.ID,
 			CreatedAt:  p.CreatedAt,
 			UpdatedAt:  p.UpdatedAt,
@@ -367,106 +381,81 @@ func (s *Service) ListPresetsSharedWithUser(ctx context.Context, recipientUserID
 		}
 	}
 
-	for _, sh := range shares {
-		if sh.Preset == nil || sh.Preset.Group == nil || sh.Preset.Group.User == nil {
+	for _, share := range shares {
+		if share.Preset == nil || share.Preset.Group == nil || share.Preset.Group.User == nil {
 			continue
 		}
-		p := sh.Preset
-		pg := p.Group
-		u := pg.User
 
-		gb := ensureBranch(u, pg)
-		addPresetDedup(gb, presetToItem(p))
+		group := ensureGroup(share.Preset.Group.User, share.Preset.Group)
+		addPreset(group, presetToItem(share.Preset))
 	}
 
-	distinctGroupIDs := make([]uint, 0, len(groupShares))
-	seenGroup := make(map[uint]struct{})
-	for _, gsh := range groupShares {
-		if gsh.Group == nil {
+	for _, share := range groupShares {
+		if share.Group == nil || share.Group.User == nil {
 			continue
 		}
-		if _, ok := seenGroup[gsh.Group.ID]; ok {
-			continue
-		}
-		seenGroup[gsh.Group.ID] = struct{}{}
-		distinctGroupIDs = append(distinctGroupIDs, gsh.Group.ID)
-	}
 
-	presetsByGroup := make(map[uint][]models.Preset)
-	if len(distinctGroupIDs) > 0 {
-		allGroupPresets, err := gorm.G[models.Preset](s.db).
-			Where(g.Preset.GroupId.In(distinctGroupIDs...)).
-			Order(g.Preset.GroupId.Asc()).
-			Order(g.Preset.Name.Asc()).
-			Find(ctx)
-		if err != nil {
-			return nil, ErrInternal
-		}
-		for i := range allGroupPresets {
-			p := allGroupPresets[i]
-			presetsByGroup[p.GroupId] = append(presetsByGroup[p.GroupId], p)
-		}
-	}
+		presetGroup := share.Group
+		group := ensureGroup(presetGroup.User, presetGroup)
 
-	for _, gsh := range groupShares {
-		if gsh.Group == nil || gsh.Group.User == nil {
-			continue
-		}
-		pg := gsh.Group
-		u := pg.User
-		gb := ensureBranch(u, pg)
-		for _, p := range presetsByGroup[pg.ID] {
-			addPresetDedup(gb, presetToItem(&p))
+		for i := range presetGroup.Presets {
+			addPreset(group, presetToItem(&presetGroup.Presets[i]))
 		}
 	}
 
 	ownerIDs := make([]uuid.UUID, 0, len(byOwner))
+
 	for id := range byOwner {
 		ownerIDs = append(ownerIDs, id)
 	}
+
 	sort.Slice(ownerIDs, func(i, j int) bool {
 		a := strings.ToLower(byOwner[ownerIDs[i]].owner.Username)
 		b := strings.ToLower(byOwner[ownerIDs[j]].owner.Username)
+
 		if a != b {
 			return a < b
 		}
+
 		return byOwner[ownerIDs[i]].owner.ID.String() < byOwner[ownerIDs[j]].owner.ID.String()
 	})
 
-	out := make([]SharedPresetsTreeItem, 0, len(ownerIDs))
-	for _, oid := range ownerIDs {
-		oa := byOwner[oid]
-		groupIDs := make([]uint, 0, len(oa.groups))
-		for gid := range oa.groups {
-			groupIDs = append(groupIDs, gid)
-		}
-		sort.Slice(groupIDs, func(i, j int) bool {
-			return oa.groups[groupIDs[i]].group.Name < oa.groups[groupIDs[j]].group.Name
+	out := make([]SharedPresetsItem, 0, len(ownerIDs))
+
+	for _, ownerID := range ownerIDs {
+		owner := byOwner[ownerID]
+		sortedGroups := slices.Collect(maps.Values(owner.groups))
+
+		sort.Slice(sortedGroups, func(i, j int) bool {
+			return strings.ToLower(sortedGroups[i].group.Name) < strings.ToLower(sortedGroups[j].group.Name)
 		})
 
-		branches := make([]SharedPresetGroupBranchItem, 0, len(groupIDs))
-		for _, gid := range groupIDs {
-			gb := oa.groups[gid]
-			ps := gb.presets
-			if ps == nil {
-				ps = []PresetInGroupTreeItem{}
+		groups := make([]SharedPresetGroupItem, 0, len(sortedGroups))
+
+		for _, group := range sortedGroups {
+			presets := group.presets
+
+			if presets == nil {
+				presets = []PresetInGroupItem{}
 			}
-			sort.Slice(ps, func(i, j int) bool {
-				return ps[i].Name < ps[j].Name
+
+			sort.Slice(presets, func(i, j int) bool {
+				return strings.ToLower(presets[i].Name) < strings.ToLower(presets[j].Name)
 			})
-			branches = append(branches, SharedPresetGroupBranchItem{
-				ID:        gb.group.ID,
-				CreatedAt: gb.group.CreatedAt,
-				UpdatedAt: gb.group.UpdatedAt,
-				Name:      gb.group.Name,
-				Public:    gb.group.Public,
-				Presets:   ps,
+
+			groups = append(groups, SharedPresetGroupItem{
+				ID:        group.group.ID,
+				CreatedAt: group.group.CreatedAt,
+				UpdatedAt: group.group.UpdatedAt,
+				Name:      group.group.Name,
+				Public:    group.group.Public,
+				Presets:   presets,
 			})
 		}
 
-		out = append(out, SharedPresetsTreeItem{
-			Owner:  oa.owner,
-			Groups: branches,
+		out = append(out, SharedPresetsItem{
+			Owner:  owner.owner,
+			Groups: groups,
 		})
 	}
 

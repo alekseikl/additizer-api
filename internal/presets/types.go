@@ -308,10 +308,10 @@ type GroupWithPresetsItem struct {
 	UserID    uuid.UUID
 	Name      string
 	Public    bool
-	Presets   []PresetInGroupTreeItem
+	Presets   []PresetInGroupItem
 }
 
-type PresetInGroupTreeItem struct {
+type PresetInGroupItem struct {
 	ID         uint
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
@@ -323,10 +323,10 @@ type PresetInGroupTreeItem struct {
 	Preset     datatypes.JSON
 }
 
-// SharedPresetsTreeItem is owner user → preset groups → presets shared with the recipient.
-type SharedPresetsTreeItem struct {
+// SharedPresetsItem is owner user → preset groups → presets shared with the recipient.
+type SharedPresetsItem struct {
 	Owner  SharedPresetOwnerItem
-	Groups []SharedPresetGroupBranchItem
+	Groups []SharedPresetGroupItem
 }
 
 // SharedPresetOwnerItem is the preset owner's public profile (no credentials).
@@ -337,12 +337,12 @@ type SharedPresetOwnerItem struct {
 	LastName  string
 }
 
-// SharedPresetGroupBranchItem is a preset group belonging to Owner with only presets shared with the recipient.
-type SharedPresetGroupBranchItem struct {
+// SharedPresetGroupItem is a preset group belonging to Owner with only presets shared with the recipient.
+type SharedPresetGroupItem struct {
 	ID        uint
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	Name      string
 	Public    bool
-	Presets   []PresetInGroupTreeItem
+	Presets   []PresetInGroupItem
 }

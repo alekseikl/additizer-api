@@ -19,6 +19,7 @@ var PresetGroup = struct {
 	User      field.Struct[models.User]
 	Name      field.String
 	Public    field.Bool
+	Presets   field.Slice[models.Preset]
 }{
 	ID:        field.Number[uint]{}.WithColumn("id"),
 	CreatedAt: field.Time{}.WithColumn("created_at"),
@@ -28,6 +29,7 @@ var PresetGroup = struct {
 	User:      field.Struct[models.User]{}.WithName("User"),
 	Name:      field.String{}.WithColumn("name"),
 	Public:    field.Bool{}.WithColumn("public"),
+	Presets:   field.Slice[models.Preset]{}.WithName("Presets"),
 }
 
 var Preset = struct {

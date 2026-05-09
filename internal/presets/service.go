@@ -23,6 +23,15 @@ func NewService(db *gorm.DB) *Service {
 	return &Service{db: db}
 }
 
+// presetTable returns the physical table name for models.Preset (for qualified ORDER BY when joining Group).
+func (s *Service) presetTable() string {
+	stmt := &gorm.Statement{DB: s.db}
+	if err := stmt.Parse(&models.Preset{}); err != nil {
+		return "presets"
+	}
+	return stmt.Schema.Table
+}
+
 func (s *Service) CreateGroup(ctx context.Context, userID uuid.UUID, input CreateGroupInput) (*GroupResult, error) {
 	input.normalize()
 
@@ -186,7 +195,7 @@ func (s *Service) ListPresets(ctx context.Context, userID uuid.UUID) ([]PresetLi
 		}).
 		Omit(g.Preset.Preset.Column().Name).
 		Order(groupName.Asc()).
-		Order(g.Preset.Name.Asc()).
+		Order(g.Preset.Name.WithTable(s.presetTable()).Asc()).
 		Find(ctx)
 	if err != nil {
 		return nil, ErrInternal
@@ -238,7 +247,7 @@ func (s *Service) ListGroupsWithPresets(ctx context.Context, userID uuid.UUID) (
 			return nil
 		}).
 		Order(groupName.Asc()).
-		Order(g.Preset.Name.Asc()).
+		Order(g.Preset.Name.WithTable(s.presetTable()).Asc()).
 		Find(ctx)
 	if err != nil {
 		return nil, ErrInternal
@@ -290,11 +299,12 @@ func (s *Service) ListPresetsSharedWithUser(ctx context.Context, recipientUserID
 	presetSharePresetGroupUser := g.PresetShare.Preset.Name() + "." + g.Preset.Group.Name() + "." + g.PresetGroup.User.Name()
 	groupShareRoot := g.PresetGroupShare.Group.Name()
 	userPreload := func(pb gorm.PreloadBuilder) error {
-		pb.
-			Select(g.User.ID.Column().Name).
-			Select(g.User.Username.Column().Name).
-			Select(g.User.FirstName.Column().Name).
-			Select(g.User.LastName.Column().Name)
+		pb.Select(
+			g.User.ID.Column().Name,
+			g.User.Username.Column().Name,
+			g.User.FirstName.Column().Name,
+			g.User.LastName.Column().Name,
+		)
 		return nil
 	}
 

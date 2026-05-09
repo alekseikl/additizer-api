@@ -79,7 +79,9 @@ regen command (taken from a comment in `internal/handlers/auth.go`) is:
    in `cmd/server/main.go`.
 5. Update `openapi.yaml` with the new path, request/response schemas, and
    error responses.
-6. Run `go vet ./...` and `go test ./...`.
+6. Start the test database (`docker compose up -d postgres_test`) and run
+   `go vet ./...` and `go test ./...` (override connection with `TEST_DATABASE_URL`
+   if needed; see `.env.example`).
 
 ## Behavioral Guidelines
 

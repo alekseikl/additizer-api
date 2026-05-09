@@ -9,37 +9,16 @@ import (
 	"github.com/alekseikl/additizer-api/internal/auth"
 	"github.com/alekseikl/additizer-api/internal/config"
 	"github.com/alekseikl/additizer-api/internal/models"
+	"github.com/alekseikl/additizer-api/internal/testdb"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 func newTestService(t *testing.T) (*Service, *gorm.DB) {
 	t.Helper()
 
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
-	})
-	if err != nil {
-		t.Fatalf("open test database: %v", err)
-	}
-
-	sqlDB, err := db.DB()
-	if err != nil {
-		t.Fatalf("get sql database: %v", err)
-	}
-	sqlDB.SetMaxOpenConns(1)
-	t.Cleanup(func() {
-		if err := sqlDB.Close(); err != nil {
-			t.Fatalf("close test database: %v", err)
-		}
-	})
-
-	if err := db.AutoMigrate(&models.User{}); err != nil {
-		t.Fatalf("migrate test database: %v", err)
-	}
+	db := testdb.Open(t)
 
 	cfg := &config.Config{
 		JWTSecret:     []byte("unit-test-secret"),

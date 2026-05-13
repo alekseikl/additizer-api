@@ -323,13 +323,11 @@ type PresetInGroupItem struct {
 	Preset     datatypes.JSON
 }
 
-// SharedPresetsItem is owner user → preset groups → presets shared with the recipient.
 type SharedPresetsItem struct {
 	Owner  SharedPresetOwnerItem
 	Groups []SharedPresetGroupItem
 }
 
-// SharedPresetOwnerItem is the preset owner's public profile (no credentials).
 type SharedPresetOwnerItem struct {
 	ID        uuid.UUID
 	Username  string
@@ -337,7 +335,6 @@ type SharedPresetOwnerItem struct {
 	LastName  string
 }
 
-// SharedPresetGroupItem is a preset group belonging to Owner with only presets shared with the recipient.
 type SharedPresetGroupItem struct {
 	ID        uint
 	CreatedAt time.Time
